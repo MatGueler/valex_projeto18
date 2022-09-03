@@ -1,12 +1,19 @@
 import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
+import "express-async-errors";
+import errorHandler from "./Middlewares/errorHandler";
+import routes from "./Routes/index";
+
+dotenv.config();
 
 const server = express();
+server.use(express.json());
 server.use(cors());
-dotenv.config();
-const PORT: number = 5000;
+server.use(routes);
+server.use(errorHandler);
 
-server.listen(() => {
-  console.log("rodou rs na porta:" + PORT);
+const PORT: any = process.env.PORT;
+server.listen(PORT, () => {
+  console.log(`It's alive on port ${PORT}`);
 });
