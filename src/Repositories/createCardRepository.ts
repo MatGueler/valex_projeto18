@@ -23,7 +23,7 @@ export async function getCardByUserAndId(typeCard: string, idEmployer: number) {
   return getCard.rows;
 }
 
-export async function getCardByNumber(cardNumber: number) {
+export async function getCardByNumber(cardNumber: string) {
   const getCard = await connection.query(
     `
     SELECT * FROM cards c
@@ -111,4 +111,15 @@ export async function getRecharge(cardNumber: string) {
     [cardNumber]
   );
   return getRecharge.rows;
+}
+
+export async function blockCard(cardNumber: string) {
+  await connection.query(
+    `
+  UPDATE cards
+  SET "isBlocked" = $1
+  WHERE number = $2;
+  `,
+    [true, cardNumber]
+  );
 }

@@ -24,7 +24,7 @@ export async function getCard(typeCard: string, idEmployer: number) {
   return getCard;
 }
 
-export async function getCardByNumber(cardNumber: number, CVC: string) {
+export async function getCardByNumber(cardNumber: string, CVC: string) {
   const getCard: any = await repository.getCardByNumber(cardNumber);
   const validCVC = verifyCVC(CVC, getCard[0].securityCode);
   if (getCard.length === 0) {
@@ -161,4 +161,19 @@ function allRecharges(recharges: any[]) {
     value += item.amount;
   });
   return value;
+}
+
+export async function blockCardByNumber(cardNumber: string, password: string) {
+  const getCard = await repository.getCardByNumber(cardNumber);
+  const verifyPassword = comparePassword(getCard[0].password, password);
+  const blockCard = repository.blockCard(cardNumber);
+  return true;
+}
+
+function comparePassword(cryptPassword: string, password: string) {
+  const correctPassword = bcrypt.compareSync(cryptPassword, password);
+  if (correctPassword) {
+    throw { code: "Unauthorized", message: "Senha incorreta" };
+  }
+  return true;
 }
