@@ -27,9 +27,7 @@ export async function getCard(typeCard: string, idEmployer: number) {
 export async function getCardByNumber(cardNumber: string, CVC: string) {
   const getCard: any = await repository.getCardByNumber(cardNumber);
   const validCVC = verifyCVC(CVC, getCard[0].securityCode);
-  if (getCard.length === 0) {
-    throw { code: "NotFound", message: "Esse cartão não está cadastrado" };
-  }
+  verifyCardExist(getCard);
   if (getCard[0].password !== null) {
     throw { code: "NotFound", message: "Esse cartão já está ativado" };
   }
@@ -92,6 +90,39 @@ export async function generateCardName(fullName: string) {
   return cardName.toLocaleUpperCase();
 }
 
+export async function generateValidData() {
+  const month = dayjs().format("MM");
+  const year = Number(dayjs().format("YYYY")) + 5;
+  const expirateData = month + "/" + year;
+  return expirateData;
+}
+
+export async function generateCVC() {
+  const createCVC = faker.finance.mask(3, false, false);
+  return createCVC;
+}
+
+export async function getStatementByNumber(cardNumber: string) {
+  const getPaymentByCard = await repository.getPayment(cardNumber);
+  const getRechargeByCard = await repository.getRecharge(cardNumber);
+  const balance = calculateBalance(getPaymentByCard, getRechargeByCard);
+  const statement = {
+    balance,
+    transactions: getPaymentByCard,
+    recharges: getRechargeByCard,
+  };
+  return statement;
+}
+
+export async function blockCardByNumber(cardNumber: string, password: string) {
+  const getCard = await repository.getCardByNumber(cardNumber);
+  verifyCardExist(getCard);
+  verifyCardIsBlocked(getCard);
+  const verifyPassword = comparePassword(getCard[0].password, password);
+  const blockCard = repository.blockCard(cardNumber);
+  return true;
+}
+
 function buidCardName(separateName: any) {
   let cardName = "";
   separateName.map((item: string, index: number) => {
@@ -107,18 +138,6 @@ function buidCardName(separateName: any) {
   return cardName;
 }
 
-export async function generateValidData() {
-  const month = dayjs().format("MM");
-  const year = Number(dayjs().format("YYYY")) + 5;
-  const expirateData = month + "/" + year;
-  return expirateData;
-}
-
-export async function generateCVC() {
-  const createCVC = faker.finance.mask(3, false, false);
-  return createCVC;
-}
-
 function verifyCVC(CVC: string, crptCVC: string) {
   const cryptr = new Cryptr("myTotallySecretKey");
   const decryptedString = cryptr.decrypt(crptCVC);
@@ -126,18 +145,6 @@ function verifyCVC(CVC: string, crptCVC: string) {
   if (decryptedString !== CVC) {
     throw { code: "Unauthorized", message: "Dados incorretos" };
   }
-}
-
-export async function getStatementByNumber(cardNumber: string) {
-  const getPaymentByCard = await repository.getPayment(cardNumber);
-  const getRechargeByCard = await repository.getRecharge(cardNumber);
-  const balance = calculateBalance(getPaymentByCard, getRechargeByCard);
-  const statement = {
-    balance,
-    transactions: getPaymentByCard,
-    recharges: getRechargeByCard,
-  };
-  return statement;
 }
 
 function calculateBalance(payments: any[], recharges: any[]) {
@@ -163,17 +170,22 @@ function allRecharges(recharges: any[]) {
   return value;
 }
 
-export async function blockCardByNumber(cardNumber: string, password: string) {
-  const getCard = await repository.getCardByNumber(cardNumber);
-  const verifyPassword = comparePassword(getCard[0].password, password);
-  const blockCard = repository.blockCard(cardNumber);
-  return true;
-}
-
 function comparePassword(cryptPassword: string, password: string) {
   const correctPassword = bcrypt.compareSync(cryptPassword, password);
   if (correctPassword) {
     throw { code: "Unauthorized", message: "Senha incorreta" };
   }
   return true;
+}
+
+function verifyCardExist(getCard: any) {
+  if (getCard.length === 0) {
+    throw { code: "NotFound", message: "Esse cartão não está cadastrado" };
+  }
+}
+
+function verifyCardIsBlocked(getCard: any) {
+  if (getCard[0].isBlocked === true) {
+    throw { code: "NotFound", message: "Esse cartão já está bloqueado" };
+  }
 }
