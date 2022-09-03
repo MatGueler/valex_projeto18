@@ -23,3 +23,17 @@ export async function CreateCard(req: Request, res: Response) {
   );
   return res.status(200).send("Card created successfully");
 }
+
+export async function ActivateCard(req: Request, res: Response) {
+  const infos: {
+    cardNumber: number;
+    CVC: string;
+    password: string;
+  } = req.body;
+
+  const verifyCard = await services.getCardByNumber(
+    infos.cardNumber,
+    infos.CVC
+  );
+  return res.status(200).send("Card activated successfully");
+}

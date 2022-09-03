@@ -9,5 +9,8 @@ export default async function errorHandler(
   if (error.code === "NotFound") {
     return res.status(404).send(error.message);
   }
+  if (error.code === "Unauthorized") {
+    return res.status(401).send(error.message);
+  }
   return res.status(500).send("errou");
 }

@@ -11,6 +11,7 @@ export async function getUser(idEmployer: number) {
   return getUser;
 }
 
+// Verify card
 export async function getCard(typeCard: string, idEmployer: number) {
   const getCard: any = await repository.getCardByUserAndId(
     typeCard,
@@ -22,6 +23,19 @@ export async function getCard(typeCard: string, idEmployer: number) {
   return getCard;
 }
 
+export async function getCardByNumber(cardNumber: number, CVC: string) {
+  const getCard: any = await repository.getCardByNumber(cardNumber);
+  const validCVC = verifyCVC(CVC, getCard[0].securityCode);
+  if (getCard.length === 0) {
+    throw { code: "NotFound", message: "Esse cartão não está cadastrado" };
+  }
+  if (getCard[0].password !== null) {
+    throw { code: "NotFound", message: "Esse cartão já está ativado" };
+  }
+  return getCard;
+}
+
+// verify company
 export async function getCompany(apiKey: string) {
   const getCompany: any = await repository.getCompanyByKey(apiKey);
   if (getCompany.length === 0) {
@@ -96,4 +110,13 @@ export async function generateValidData() {
 export async function generateCVC() {
   const createCVC = faker.finance.mask(3, false, false);
   return createCVC;
+}
+
+function verifyCVC(CVC: string, crptCVC: string) {
+  const cryptr = new Cryptr("myTotallySecretKey");
+  const decryptedString = cryptr.decrypt(crptCVC);
+  console.log(decryptedString);
+  if (decryptedString !== CVC) {
+    throw { code: "Unauthorized", message: "Dados incorretos" };
+  }
 }

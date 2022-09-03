@@ -11,6 +11,7 @@ export async function getUserById(idEmployer: number) {
   return getUser.rows;
 }
 
+// get card
 export async function getCardByUserAndId(typeCard: string, idEmployer: number) {
   const getCard = await connection.query(
     `
@@ -18,6 +19,17 @@ export async function getCardByUserAndId(typeCard: string, idEmployer: number) {
     WHERE c.type = $1 AND c."employeeId" = $2
     `,
     [typeCard, idEmployer]
+  );
+  return getCard.rows;
+}
+
+export async function getCardByNumber(cardNumber: number) {
+  const getCard = await connection.query(
+    `
+    SELECT * FROM cards c
+    WHERE c.number = $1
+    `,
+    [cardNumber]
   );
   return getCard.rows;
 }
