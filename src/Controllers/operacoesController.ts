@@ -32,7 +32,7 @@ export async function ActivateCard(req: Request, res: Response) {
   } = req.body;
 
   const verifyCard = await services.getCardByNumber(
-    infos.cardNumber,
+    String(infos.cardNumber),
     infos.CVC
   );
   const activeCard = await services.activeCard(
@@ -50,4 +50,16 @@ export async function statementCard(req: Request, res: Response) {
     String(infos.cardNumber)
   );
   return res.status(200).send(getStatement);
+}
+
+export async function blockCard(req: Request, res: Response) {
+  const infos: {
+    cardNumber: number;
+    password: string;
+  } = req.body;
+  const blockCard = await services.blockCardByNumber(
+    String(infos.cardNumber),
+    infos.password
+  );
+  return res.status(200).send("Your card has been blocked successfully");
 }
