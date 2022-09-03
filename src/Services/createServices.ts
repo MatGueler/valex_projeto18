@@ -123,6 +123,15 @@ export async function blockCardByNumber(cardNumber: string, password: string) {
   return true;
 }
 
+export async function unlockCardByNumber(cardNumber: string, password: string) {
+  const getCard = await repository.getCardByNumber(cardNumber);
+  verifyCardExist(getCard);
+  verifyCardIsUnlocked(getCard);
+  const verifyPassword = comparePassword(getCard[0].password, password);
+  const unlockCard = repository.unlockCard(cardNumber);
+  return true;
+}
+
 function buidCardName(separateName: any) {
   let cardName = "";
   separateName.map((item: string, index: number) => {
@@ -187,5 +196,11 @@ function verifyCardExist(getCard: any) {
 function verifyCardIsBlocked(getCard: any) {
   if (getCard[0].isBlocked === true) {
     throw { code: "NotFound", message: "Esse cartão já está bloqueado" };
+  }
+}
+
+function verifyCardIsUnlocked(getCard: any) {
+  if (getCard[0].isBlocked === false) {
+    throw { code: "NotFound", message: "Esse cartão já está desbloqueado" };
   }
 }
