@@ -75,3 +75,15 @@ export async function createCard(card: any) {
     ]
   );
 }
+
+export async function activeCard(password: string, cardNumber: number) {
+  console.log({ password, cardNumber });
+  await connection.query(
+    `
+  UPDATE cards
+  SET password=$1, "isBlocked" = $2
+  WHERE number = $3;
+  `,
+    [password, false, cardNumber]
+  );
+}

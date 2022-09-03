@@ -35,5 +35,9 @@ export async function ActivateCard(req: Request, res: Response) {
     infos.cardNumber,
     infos.CVC
   );
+  const activeCard = await services.activeCard(
+    infos.password,
+    infos.cardNumber
+  );
   return res.status(200).send("Card activated successfully");
 }

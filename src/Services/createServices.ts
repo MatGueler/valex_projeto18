@@ -1,6 +1,7 @@
 import * as repository from "../Repositories/createCardRepository";
 import Cryptr from "cryptr";
 import { faker } from "@faker-js/faker";
+import bcrypt from "bcrypt";
 import dayjs from "dayjs";
 
 export async function getUser(idEmployer: number) {
@@ -44,6 +45,7 @@ export async function getCompany(apiKey: string) {
   return getCompany;
 }
 
+// Create and active card
 export async function createCard(
   fullName: string,
   employeeId: number,
@@ -65,12 +67,17 @@ export async function createCard(
     password: null,
     isVirtual: false,
     originalCardId: null,
-    isBlocked: false,
+    isBlocked: true,
     typeCard,
   };
 
   await repository.createCard(card);
   return card;
+}
+
+export async function activeCard(password: string, cardNumber: number) {
+  const cryptPassword = bcrypt.hashSync(password, 10);
+  const changePassword = repository.activeCard(cryptPassword, cardNumber);
 }
 
 export async function generateCardNumber() {
