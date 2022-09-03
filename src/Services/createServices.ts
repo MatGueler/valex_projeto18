@@ -1,6 +1,7 @@
 import * as repository from "../Repositories/createCardRepository";
 import Cryptr from "cryptr";
 import { faker } from "@faker-js/faker";
+import bcrypt from "bcrypt";
 import dayjs from "dayjs";
 
 export async function getUser(idEmployer: number) {
@@ -11,6 +12,7 @@ export async function getUser(idEmployer: number) {
   return getUser;
 }
 
+// Verify card
 export async function getCard(typeCard: string, idEmployer: number) {
   const getCard: any = await repository.getCardByUserAndId(
     typeCard,
@@ -22,6 +24,19 @@ export async function getCard(typeCard: string, idEmployer: number) {
   return getCard;
 }
 
+export async function getCardByNumber(cardNumber: number, CVC: string) {
+  const getCard: any = await repository.getCardByNumber(cardNumber);
+  const validCVC = verifyCVC(CVC, getCard[0].securityCode);
+  if (getCard.length === 0) {
+    throw { code: "NotFound", message: "Esse cartão não está cadastrado" };
+  }
+  if (getCard[0].password !== null) {
+    throw { code: "NotFound", message: "Esse cartão já está ativado" };
+  }
+  return getCard;
+}
+
+// verify company
 export async function getCompany(apiKey: string) {
   const getCompany: any = await repository.getCompanyByKey(apiKey);
   if (getCompany.length === 0) {
@@ -30,6 +45,7 @@ export async function getCompany(apiKey: string) {
   return getCompany;
 }
 
+// Create and active card
 export async function createCard(
   fullName: string,
   employeeId: number,
@@ -51,12 +67,17 @@ export async function createCard(
     password: null,
     isVirtual: false,
     originalCardId: null,
-    isBlocked: false,
+    isBlocked: true,
     typeCard,
   };
 
   await repository.createCard(card);
   return card;
+}
+
+export async function activeCard(password: string, cardNumber: number) {
+  const cryptPassword = bcrypt.hashSync(password, 10);
+  const changePassword = repository.activeCard(cryptPassword, cardNumber);
 }
 
 export async function generateCardNumber() {
@@ -96,4 +117,48 @@ export async function generateValidData() {
 export async function generateCVC() {
   const createCVC = faker.finance.mask(3, false, false);
   return createCVC;
+}
+
+function verifyCVC(CVC: string, crptCVC: string) {
+  const cryptr = new Cryptr("myTotallySecretKey");
+  const decryptedString = cryptr.decrypt(crptCVC);
+  console.log(decryptedString);
+  if (decryptedString !== CVC) {
+    throw { code: "Unauthorized", message: "Dados incorretos" };
+  }
+}
+
+export async function getStatementByNumber(cardNumber: string) {
+  const getPaymentByCard = await repository.getPayment(cardNumber);
+  const getRechargeByCard = await repository.getRecharge(cardNumber);
+  const balance = calculateBalance(getPaymentByCard, getRechargeByCard);
+  const statement = {
+    balance,
+    transactions: getPaymentByCard,
+    recharges: getRechargeByCard,
+  };
+  return statement;
+}
+
+function calculateBalance(payments: any[], recharges: any[]) {
+  const totalPayments = allPayments(payments);
+  const totalRecharges = allRecharges(recharges);
+  const balance = totalRecharges - totalPayments;
+  return balance;
+}
+
+function allPayments(payments: any[]) {
+  let value = 0;
+  payments.map((item) => {
+    value += item.amount;
+  });
+  return value;
+}
+
+function allRecharges(recharges: any[]) {
+  let value = 0;
+  recharges.map((item) => {
+    value += item.amount;
+  });
+  return value;
 }

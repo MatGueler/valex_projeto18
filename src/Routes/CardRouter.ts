@@ -1,8 +1,16 @@
 import { Router } from "express";
-import { CreateCard } from "../Controllers/operacoesController";
+import {
+  ActivateCard,
+  CreateCard,
+  statementCard,
+} from "../Controllers/operacoesController";
+import { validateSchema } from "../Middlewares/validateSchema";
+import passwordSchema from "../Schemas/passwordSchema";
 
 const CardRouter = Router();
 
-CardRouter.get("/create", CreateCard);
+CardRouter.post("/create", CreateCard);
+CardRouter.post("/active", validateSchema(passwordSchema), ActivateCard);
+CardRouter.get("/statement", statementCard);
 
 export default CardRouter;
