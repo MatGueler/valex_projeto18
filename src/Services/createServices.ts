@@ -56,7 +56,6 @@ export async function createCard(
   };
 
   await repository.createCard(card);
-
   return card;
 }
 
