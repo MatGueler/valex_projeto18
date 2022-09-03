@@ -127,3 +127,38 @@ function verifyCVC(CVC: string, crptCVC: string) {
     throw { code: "Unauthorized", message: "Dados incorretos" };
   }
 }
+
+export async function getStatementByNumber(cardNumber: string) {
+  const getPaymentByCard = await repository.getPayment(cardNumber);
+  const getRechargeByCard = await repository.getRecharge(cardNumber);
+  const balance = calculateBalance(getPaymentByCard, getRechargeByCard);
+  const statement = {
+    balance,
+    transactions: getPaymentByCard,
+    recharges: getRechargeByCard,
+  };
+  return statement;
+}
+
+function calculateBalance(payments: any[], recharges: any[]) {
+  const totalPayments = allPayments(payments);
+  const totalRecharges = allRecharges(recharges);
+  const balance = totalRecharges - totalPayments;
+  return balance;
+}
+
+function allPayments(payments: any[]) {
+  let value = 0;
+  payments.map((item) => {
+    value += item.amount;
+  });
+  return value;
+}
+
+function allRecharges(recharges: any[]) {
+  let value = 0;
+  recharges.map((item) => {
+    value += item.amount;
+  });
+  return value;
+}

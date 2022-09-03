@@ -41,3 +41,13 @@ export async function ActivateCard(req: Request, res: Response) {
   );
   return res.status(200).send("Card activated successfully");
 }
+
+export async function statementCard(req: Request, res: Response) {
+  const infos: {
+    cardNumber: number;
+  } = req.body;
+  const getStatement = await services.getStatementByNumber(
+    String(infos.cardNumber)
+  );
+  return res.status(200).send(getStatement);
+}

@@ -87,3 +87,28 @@ export async function activeCard(password: string, cardNumber: number) {
     [password, false, cardNumber]
   );
 }
+
+export async function getPayment(cardNumber: string) {
+  const getPayment = await connection.query(
+    `
+  SELECT p.*,b.name AS "businessName" FROM payments p
+  JOIN businesses b ON p."businessId" = b.id
+  JOIN cards c ON c.id=p."cardId"
+  WHERE c.number=$1
+  `,
+    [cardNumber]
+  );
+  return getPayment.rows;
+}
+
+export async function getRecharge(cardNumber: string) {
+  const getRecharge = await connection.query(
+    `
+    SELECT * FROM recharges r
+    JOIN cards c ON r.id=r."cardId"
+    WHERE c.number = $1
+  `,
+    [cardNumber]
+  );
+  return getRecharge.rows;
+}
