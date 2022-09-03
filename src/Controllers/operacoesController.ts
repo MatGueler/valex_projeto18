@@ -63,3 +63,15 @@ export async function blockCard(req: Request, res: Response) {
   );
   return res.status(200).send("Your card has been blocked successfully");
 }
+
+export async function unlockCard(req: Request, res: Response) {
+  const infos: {
+    cardNumber: number;
+    password: string;
+  } = req.body;
+  const unlockCard = await services.unlockCardByNumber(
+    String(infos.cardNumber),
+    infos.password
+  );
+  return res.status(200).send("Your card has been unlocked successfully");
+}

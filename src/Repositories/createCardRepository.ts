@@ -123,3 +123,14 @@ export async function blockCard(cardNumber: string) {
     [true, cardNumber]
   );
 }
+
+export async function unlockCard(cardNumber: string) {
+  await connection.query(
+    `
+  UPDATE cards
+  SET "isBlocked" = $1
+  WHERE number = $2;
+  `,
+    [false, cardNumber]
+  );
+}
