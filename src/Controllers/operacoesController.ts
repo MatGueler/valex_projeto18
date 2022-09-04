@@ -87,3 +87,19 @@ export async function rechargeCard(req: Request, res: Response) {
   );
   return res.status(200).send("Your card has been recharge successfully");
 }
+
+export async function paymentCard(req: Request, res: Response) {
+  const infos: {
+    cardNumber: number;
+    password: string;
+    businessId: number;
+    amount: number;
+  } = req.body;
+  const paymentCard = await services.paymentCard(
+    String(infos.cardNumber),
+    infos.password,
+    infos.businessId,
+    infos.amount
+  );
+  return res.status(200).send("Your card has been payment successfully");
+}

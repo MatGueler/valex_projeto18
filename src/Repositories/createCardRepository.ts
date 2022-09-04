@@ -146,3 +146,27 @@ export async function createRecharge(recharge: any) {
     [recharge.cardId, recharge.amount]
   );
 }
+
+export async function createPayment(payment: any) {
+  await connection.query(
+    `
+    INSERT INTO payments (
+    "cardId",
+    "businessId",
+    amount
+    ) VALUES ($1,$2,$3)
+  `,
+    [payment.cardId, payment.businessId, payment.amount]
+  );
+}
+
+export async function getBusiness(businessId: number) {
+  const business = await connection.query(
+    `
+    SELECT * FROM businesses b
+    WHERE b.id = $1
+  `,
+    [businessId]
+  );
+  return business.rows;
+}

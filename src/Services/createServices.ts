@@ -28,7 +28,9 @@ export async function getCardByNumber(cardNumber: string, CVC: string) {
   const getCard: any = await repository.getCardByNumber(cardNumber);
   const validCVC = verifyCVC(CVC, getCard[0].securityCode);
   verifyCardExist(getCard);
-  verifyCardActivated(getCard[0]);
+  if (getCard[0].password !== null) {
+    throw { code: "NotFound", message: "Esse cartão já está ativado" };
+  }
   return getCard;
 }
 
@@ -59,7 +61,7 @@ export async function createCard(
     cardNumber,
     cardName,
     CVC: crptCVC,
-    expirationDate: nowDate.month + "/" + nowDate.year,
+    expirationDate: nowDate.month + "/" + `${Number(nowDate.year) + 5}`,
     password: null,
     isVirtual: false,
     originalCardId: null,
@@ -83,7 +85,7 @@ export async function generateCardNumber() {
 
 export async function generateCardName(fullName: string) {
   const separateName = fullName.split(" ");
-  const cardName = buidCardName(separateName);
+  const cardName = buildCardName(separateName);
 
   return cardName.toLocaleUpperCase();
 }
@@ -126,9 +128,7 @@ export async function unlockCardByNumber(cardNumber: string, password: string) {
 export async function rechargeCard(cardNumber: string, amount: number) {
   const getCard = await repository.getCardByNumber(cardNumber);
   verifyCardExist(getCard);
-  if (getCard[0].password === null) {
-    throw { code: "NotFound", message: "Esse cartão não está ativado" };
-  }
+  verifyCardActivated(getCard[0]);
   const recharge = {
     cardId: getCard[0].id,
     amount,
@@ -137,14 +137,58 @@ export async function rechargeCard(cardNumber: string, amount: number) {
   return true;
 }
 
+export async function paymentCard(
+  cardNumber: string,
+  password: string,
+  businessId: number,
+  amount: number
+) {
+  const getCard = await repository.getCardByNumber(cardNumber);
+  const getBusiness = await repository.getBusiness(businessId);
+  comparePassword(getCard[0].password, password);
+  verifyCardExist(getCard);
+  verifyCardActivated(getCard[0]);
+  verifyCardIsBlocked(getCard);
+  verifyBusinessExist(getBusiness, getCard);
+  verifyExpirationCard(getCard[0].expirationDate);
+  const statement = await getStatementByNumber(cardNumber);
+  verifyBalance(statement, amount);
+  const payment = {
+    cardId: getCard[0].id,
+    businessId,
+    amount,
+  };
+  const createPayment = await repository.createPayment(payment);
+  return true;
+}
+
 export function generateValidData() {
   const day = dayjs().format("DD");
   const month = dayjs().format("MM");
-  const year = Number(dayjs().format("YYYY")) + 5;
+  const year = dayjs().format("YYYY");
   return { day, month, year };
 }
 
-function buidCardName(separateName: any) {
+function verifyBusinessExist(business: any, card: any) {
+  if (business.length === 0) {
+    throw { code: "Unauthorized", message: "This business don't exist" };
+  }
+  if (business[0].type !== card[0].type) {
+    throw {
+      code: "Unauthorized",
+      message: "This business is incompatible with card",
+    };
+  }
+}
+
+function verifyBalance(statement: any, amount: number) {
+  console.log(statement.balance);
+  if (statement.balance < amount) {
+    throw { code: "Unauthorized", message: "Your balance is insufficient" };
+  }
+}
+
+function buildCardName(separateName: any) {
   let cardName = "";
   separateName.map((item: string, index: number) => {
     if (item.length <= 3) {
@@ -192,8 +236,8 @@ function allRecharges(recharges: any[]) {
 }
 
 function comparePassword(cryptPassword: string, password: string) {
-  const correctPassword = bcrypt.compareSync(cryptPassword, password);
-  if (correctPassword) {
+  const correctPassword = bcrypt.compareSync(password, cryptPassword);
+  if (correctPassword === false) {
     throw { code: "Unauthorized", message: "Senha incorreta" };
   }
   return true;
@@ -207,18 +251,30 @@ function verifyCardExist(getCard: any) {
 
 function verifyCardIsBlocked(getCard: any) {
   if (getCard[0].isBlocked === true) {
-    throw { code: "NotFound", message: "Esse cartão já está bloqueado" };
+    throw { code: "NotFound", message: "Esse cartão está bloqueado" };
   }
 }
 
 function verifyCardIsUnlocked(getCard: any) {
   if (getCard[0].isBlocked === false) {
-    throw { code: "NotFound", message: "Esse cartão já está desbloqueado" };
+    throw { code: "NotFound", message: "Esse cartão está desbloqueado" };
   }
 }
 
 function verifyCardActivated(card: any) {
-  if (card.password !== null) {
-    throw { code: "NotFound", message: "Esse cartão já está ativado" };
+  if (card.password === null) {
+    throw { code: "NotFound", message: "Esse cartão não está ativado" };
+  }
+}
+
+function verifyExpirationCard(expiration: string) {
+  const separateDateExpiration = expiration.split("/");
+  const nowDate = generateValidData();
+  if (
+    separateDateExpiration[1] < nowDate.year ||
+    (separateDateExpiration[1] === nowDate.year &&
+      separateDateExpiration[0] < nowDate.month)
+  ) {
+    throw { code: "Unauthorized", message: "Your card has expired" };
   }
 }
