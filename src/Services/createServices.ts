@@ -28,9 +28,7 @@ export async function getCardByNumber(cardNumber: string, CVC: string) {
   const getCard: any = await repository.getCardByNumber(cardNumber);
   const validCVC = verifyCVC(CVC, getCard[0].securityCode);
   verifyCardExist(getCard);
-  if (getCard[0].password !== null) {
-    throw { code: "NotFound", message: "Esse cartão já está ativado" };
-  }
+  verifyCardActivated(getCard[0]);
   return getCard;
 }
 
@@ -51,7 +49,7 @@ export async function createCard(
 ) {
   const cardNumber = await generateCardNumber();
   const cardName = await generateCardName(fullName);
-  const expirationDate = await generateValidData();
+  const nowDate = generateValidData();
   const CVC = await generateCVC();
   const cryptr = new Cryptr("myTotallySecretKey");
   const crptCVC = cryptr.encrypt(CVC);
@@ -61,7 +59,7 @@ export async function createCard(
     cardNumber,
     cardName,
     CVC: crptCVC,
-    expirationDate,
+    expirationDate: nowDate.month + "/" + nowDate.year,
     password: null,
     isVirtual: false,
     originalCardId: null,
@@ -88,13 +86,6 @@ export async function generateCardName(fullName: string) {
   const cardName = buidCardName(separateName);
 
   return cardName.toLocaleUpperCase();
-}
-
-export async function generateValidData() {
-  const month = dayjs().format("MM");
-  const year = Number(dayjs().format("YYYY")) + 5;
-  const expirateData = month + "/" + year;
-  return expirateData;
 }
 
 export async function generateCVC() {
@@ -130,6 +121,27 @@ export async function unlockCardByNumber(cardNumber: string, password: string) {
   const verifyPassword = comparePassword(getCard[0].password, password);
   const unlockCard = repository.unlockCard(cardNumber);
   return true;
+}
+
+export async function rechargeCard(cardNumber: string, amount: number) {
+  const getCard = await repository.getCardByNumber(cardNumber);
+  verifyCardExist(getCard);
+  if (getCard[0].password === null) {
+    throw { code: "NotFound", message: "Esse cartão não está ativado" };
+  }
+  const recharge = {
+    cardId: getCard[0].id,
+    amount,
+  };
+  const createRecharge = await repository.createRecharge(recharge);
+  return true;
+}
+
+export function generateValidData() {
+  const day = dayjs().format("DD");
+  const month = dayjs().format("MM");
+  const year = Number(dayjs().format("YYYY")) + 5;
+  return { day, month, year };
 }
 
 function buidCardName(separateName: any) {
@@ -202,5 +214,11 @@ function verifyCardIsBlocked(getCard: any) {
 function verifyCardIsUnlocked(getCard: any) {
   if (getCard[0].isBlocked === false) {
     throw { code: "NotFound", message: "Esse cartão já está desbloqueado" };
+  }
+}
+
+function verifyCardActivated(card: any) {
+  if (card.password !== null) {
+    throw { code: "NotFound", message: "Esse cartão já está ativado" };
   }
 }

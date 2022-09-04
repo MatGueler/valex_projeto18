@@ -75,3 +75,15 @@ export async function unlockCard(req: Request, res: Response) {
   );
   return res.status(200).send("Your card has been unlocked successfully");
 }
+
+export async function rechargeCard(req: Request, res: Response) {
+  const infos: {
+    cardNumber: number;
+    amount: number;
+  } = req.body;
+  const rechargeCard = await services.rechargeCard(
+    String(infos.cardNumber),
+    infos.amount
+  );
+  return res.status(200).send("Your card has been recharge successfully");
+}

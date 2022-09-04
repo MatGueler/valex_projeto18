@@ -134,3 +134,15 @@ export async function unlockCard(cardNumber: string) {
     [false, cardNumber]
   );
 }
+
+export async function createRecharge(recharge: any) {
+  await connection.query(
+    `
+    INSERT INTO recharges (
+    "cardId",
+    amount
+    ) VALUES ($1,$2)
+  `,
+    [recharge.cardId, recharge.amount]
+  );
+}
