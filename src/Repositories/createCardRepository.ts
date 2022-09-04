@@ -104,8 +104,8 @@ export async function getPayment(cardNumber: string) {
 export async function getRecharge(cardNumber: string) {
   const getRecharge = await connection.query(
     `
-    SELECT * FROM recharges r
-    JOIN cards c ON r.id=r."cardId"
+    SELECT r.* FROM recharges r
+    JOIN cards c ON c.id=r."cardId"
     WHERE c.number = $1
   `,
     [cardNumber]
