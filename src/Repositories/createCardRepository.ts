@@ -104,8 +104,8 @@ export async function getPayment(cardNumber: string) {
 export async function getRecharge(cardNumber: string) {
   const getRecharge = await connection.query(
     `
-    SELECT * FROM recharges r
-    JOIN cards c ON r.id=r."cardId"
+    SELECT r.* FROM recharges r
+    JOIN cards c ON c.id=r."cardId"
     WHERE c.number = $1
   `,
     [cardNumber]
@@ -133,4 +133,40 @@ export async function unlockCard(cardNumber: string) {
   `,
     [false, cardNumber]
   );
+}
+
+export async function createRecharge(recharge: any) {
+  await connection.query(
+    `
+    INSERT INTO recharges (
+    "cardId",
+    amount
+    ) VALUES ($1,$2)
+  `,
+    [recharge.cardId, recharge.amount]
+  );
+}
+
+export async function createPayment(payment: any) {
+  await connection.query(
+    `
+    INSERT INTO payments (
+    "cardId",
+    "businessId",
+    amount
+    ) VALUES ($1,$2,$3)
+  `,
+    [payment.cardId, payment.businessId, payment.amount]
+  );
+}
+
+export async function getBusiness(businessId: number) {
+  const business = await connection.query(
+    `
+    SELECT * FROM businesses b
+    WHERE b.id = $1
+  `,
+    [businessId]
+  );
+  return business.rows;
 }
