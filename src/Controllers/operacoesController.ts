@@ -21,7 +21,7 @@ export async function CreateCard(req: Request, res: Response) {
     infos.idEmployer,
     infos.typeCard
   );
-  return res.status(200).send("Card created successfully");
+  return res.status(200).send(createCard);
 }
 
 export async function ActivateCard(req: Request, res: Response) {

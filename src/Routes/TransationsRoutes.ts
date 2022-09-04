@@ -5,13 +5,13 @@ import {
   paymentCard,
 } from "../Controllers/operacoesController";
 import { validateSchema } from "../Middlewares/validateSchema";
-import passwordSchema from "../Schemas/passwordSchema";
 import paymentSchema from "../Schemas/paymentSchema";
 import rechargeSchema from "../Schemas/rechargeSchema";
+import cardNumberSchema from "../Schemas/cardNumberSchema";
 
 const CardRouter = Router();
 
-CardRouter.get("/statement", statementCard);
+CardRouter.get("/statement", validateSchema(cardNumberSchema), statementCard);
 CardRouter.post("/recharge", validateSchema(rechargeSchema), rechargeCard);
 CardRouter.post("/payment", validateSchema(paymentSchema), paymentCard);
 

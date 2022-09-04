@@ -26,6 +26,7 @@ export async function getCard(typeCard: string, idEmployer: number) {
 
 export async function getCardByNumber(cardNumber: string, CVC: string) {
   const getCard: any = await repository.getCardByNumber(cardNumber);
+  verifyExpirationCard(getCard[0].expirationDate);
   const validCVC = verifyCVC(CVC, getCard[0].securityCode);
   verifyCardExist(getCard);
   if (getCard[0].password !== null) {
@@ -70,7 +71,7 @@ export async function createCard(
   };
 
   await repository.createCard(card);
-  return card;
+  return { CVC: CVC, number: card.cardNumber, typeCard };
 }
 
 export async function activeCard(password: string, cardNumber: number) {
@@ -111,6 +112,7 @@ export async function blockCardByNumber(cardNumber: string, password: string) {
   const getCard = await repository.getCardByNumber(cardNumber);
   verifyCardExist(getCard);
   verifyCardIsBlocked(getCard);
+  verifyExpirationCard(getCard[0].expirationDate);
   const verifyPassword = comparePassword(getCard[0].password, password);
   const blockCard = repository.blockCard(cardNumber);
   return true;
@@ -120,6 +122,7 @@ export async function unlockCardByNumber(cardNumber: string, password: string) {
   const getCard = await repository.getCardByNumber(cardNumber);
   verifyCardExist(getCard);
   verifyCardIsUnlocked(getCard);
+  verifyExpirationCard(getCard[0].expirationDate);
   const verifyPassword = comparePassword(getCard[0].password, password);
   const unlockCard = repository.unlockCard(cardNumber);
   return true;
@@ -129,6 +132,7 @@ export async function rechargeCard(cardNumber: string, amount: number) {
   const getCard = await repository.getCardByNumber(cardNumber);
   verifyCardExist(getCard);
   verifyCardActivated(getCard[0]);
+  verifyExpirationCard(getCard[0].expirationDate);
   const recharge = {
     cardId: getCard[0].id,
     amount,
@@ -182,7 +186,6 @@ function verifyBusinessExist(business: any, card: any) {
 }
 
 function verifyBalance(statement: any, amount: number) {
-  console.log(statement.balance);
   if (statement.balance < amount) {
     throw { code: "Unauthorized", message: "Your balance is insufficient" };
   }
@@ -206,7 +209,6 @@ function buildCardName(separateName: any) {
 function verifyCVC(CVC: string, crptCVC: string) {
   const cryptr = new Cryptr("myTotallySecretKey");
   const decryptedString = cryptr.decrypt(crptCVC);
-  console.log(decryptedString);
   if (decryptedString !== CVC) {
     throw { code: "Unauthorized", message: "Dados incorretos" };
   }
