@@ -97,6 +97,8 @@ export async function generateCVC() {
 }
 
 export async function getStatementByNumber(cardNumber: string) {
+  const getCard: any = await repository.getCardByNumber(cardNumber);
+  verifyCardExist(getCard);
   const getPaymentByCard = await repository.getPayment(cardNumber);
   const getRechargeByCard = await repository.getRecharge(cardNumber);
   const balance = calculateBalance(getPaymentByCard, getRechargeByCard);
@@ -242,7 +244,7 @@ function verifyCVC(CVC: string, crptCVC: string) {
   const cryptr = new Cryptr("myTotallySecretKey");
   const decryptedString = cryptr.decrypt(crptCVC);
   if (decryptedString !== CVC) {
-    throw { code: "Unauthorized", message: "Dados incorretos" };
+    throw { code: "Unauthorized", message: "Incorrect data" };
   }
 }
 
@@ -279,25 +281,25 @@ function comparePassword(cryptPassword: string, password: string) {
 
 function verifyCardExist(getCard: any) {
   if (getCard.length === 0) {
-    throw { code: "NotFound", message: "Esse cartão não está cadastrado" };
+    throw { code: "NotFound", message: "This card is not registered" };
   }
 }
 
 function verifyCardIsBlocked(getCard: any) {
   if (getCard[0].isBlocked === true) {
-    throw { code: "NotFound", message: "Esse cartão está bloqueado" };
+    throw { code: "Unauthorized", message: "This card is blocked" };
   }
 }
 
 function verifyCardIsUnlocked(getCard: any) {
   if (getCard[0].isBlocked === false) {
-    throw { code: "NotFound", message: "Esse cartão está desbloqueado" };
+    throw { code: "NotFound", message: "This card is unlocked" };
   }
 }
 
 function verifyCardActivated(card: any) {
   if (card.password === null) {
-    throw { code: "NotFound", message: "Esse cartão não está ativado" };
+    throw { code: "NotFound", message: "This card is not active" };
   }
 }
 
