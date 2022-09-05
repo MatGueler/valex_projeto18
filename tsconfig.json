@@ -6,9 +6,6 @@
     "forceConsistentCasingInFileNames": true,
     "strict": true,
     "skipLibCheck": true,
-    "scripts": {
-      "build": "tsc",
-      "start": "node dist/app.js"
-    }
+    "outDir": "dist"
   }
 }
