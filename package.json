@@ -4,6 +4,10 @@
   "description": "",
   "main": "index.js",
   "author": "",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js"
+  },
   "license": "ISC",
   "dependencies": {
     "bcrypt": "^5.0.1",
