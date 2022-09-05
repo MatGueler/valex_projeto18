@@ -71,7 +71,7 @@ export async function createCard(
   };
 
   await repository.createCard(card);
-  return card;
+  return { CVC: CVC, number: card.cardNumber, typeCard };
 }
 
 export async function activeCard(password: string, cardNumber: number) {
@@ -166,11 +166,43 @@ export async function paymentCard(
   return true;
 }
 
+export async function virtualPayment(infos: any) {
+  const getCard = await repository.getCardByNumber(infos.cardNumber);
+  const getBusiness = await repository.getBusiness(infos.businessId);
+  verifyCardExist(getCard);
+  verifyCardActivated(getCard[0]);
+  verifyCardIsBlocked(getCard);
+  verifyBusinessExist(getBusiness, getCard);
+  verifyExpirationCard(getCard[0].expirationDate);
+  const statement = await getStatementByNumber(infos.cardNumber);
+  verifyBalance(statement, infos.amount);
+  verifyCVC(String(infos.CVC), getCard[0].securityCode);
+  verifyCardInfos(infos, getCard[0]);
+  const createPayment = await repository.createPayment({
+    cardId: getCard[0].id,
+    businessId: infos.businessId,
+    amount: infos.amount,
+  });
+  return true;
+}
+
 export function generateValidData() {
   const day = dayjs().format("DD");
   const month = dayjs().format("MM");
   const year = dayjs().format("YYYY");
   return { day, month, year };
+}
+
+function verifyCardInfos(infos: any, card: any) {
+  if (infos.number !== card.cardNumber) {
+    throw { code: "Unauthorized", message: "Incorrect data" };
+  }
+  if (infos.cardName.toLocaleUpperCase() !== card.cardholderName) {
+    throw { code: "Unauthorized", message: "Incorrect data" };
+  }
+  if (card.expirationDate !== infos.expirateData) {
+    throw { code: "Unauthorized", message: "Incorrect data" };
+  }
 }
 
 function verifyBusinessExist(business: any, card: any) {
@@ -186,7 +218,6 @@ function verifyBusinessExist(business: any, card: any) {
 }
 
 function verifyBalance(statement: any, amount: number) {
-  console.log(statement.balance);
   if (statement.balance < amount) {
     throw { code: "Unauthorized", message: "Your balance is insufficient" };
   }
@@ -210,7 +241,6 @@ function buildCardName(separateName: any) {
 function verifyCVC(CVC: string, crptCVC: string) {
   const cryptr = new Cryptr("myTotallySecretKey");
   const decryptedString = cryptr.decrypt(crptCVC);
-  console.log(decryptedString);
   if (decryptedString !== CVC) {
     throw { code: "Unauthorized", message: "Dados incorretos" };
   }

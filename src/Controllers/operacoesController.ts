@@ -21,7 +21,7 @@ export async function CreateCard(req: Request, res: Response) {
     infos.idEmployer,
     infos.typeCard
   );
-  return res.status(200).send("Card created successfully");
+  return res.status(200).send(createCard);
 }
 
 export async function ActivateCard(req: Request, res: Response) {
@@ -101,5 +101,18 @@ export async function paymentCard(req: Request, res: Response) {
     infos.businessId,
     infos.amount
   );
+  return res.status(200).send("Your card has been payment successfully");
+}
+
+export async function virtualPayment(req: Request, res: Response) {
+  const infos: {
+    cardNumber: number;
+    cardName: string;
+    expirateData: string;
+    CVC: number;
+    businessId: number;
+    amount: number;
+  } = req.body;
+  const virtualPayment = await services.virtualPayment(infos);
   return res.status(200).send("Your card has been payment successfully");
 }
