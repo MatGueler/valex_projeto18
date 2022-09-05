@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "ts-node ./src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
     "dev": "nodemon ./src/index.ts"
   },
   "author": "",
@@ -27,6 +28,7 @@
     "@types/cors": "^2.8.12",
     "@types/cryptr": "^4.0.1",
     "@types/express": "^4.17.13",
+    "@types/faker": "^6.6.9",
     "@types/joi": "^17.2.3",
     "@types/pg": "^8.6.5",
     "ts-node": "^10.9.1",
